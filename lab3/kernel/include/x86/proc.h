@@ -25,7 +25,7 @@ typedef union ProcessTable{
 } PCB;
 
 #define MAX_NPROC 4
-#define MAX_TIME 20
+#define MAX_TIME 5
 #define HZ 100
 extern PCB pcb[MAX_NPROC];
 int current;

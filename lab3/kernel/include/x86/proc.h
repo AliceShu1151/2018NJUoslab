@@ -24,13 +24,18 @@ typedef union ProcessTable{
     };
 } PCB;
 
-extern PCB *current;
+#define MAX_NPROC 4
+#define MAX_TIME 20
+#define HZ 100
+extern PCB pcb[MAX_NPROC];
+int current;
 
-PCB *schedule();
-struct TrapFrame *switchProc(PCB *proc);
+void initPCBLink();
+int schedule();
+struct TrapFrame *switchProc(int proc);
 void makeProc(void *entry, int type);
 void timeReduceProc();
 void forkProc(PCB *proc);
-void killProc(PCB *proc);
+void killProc(int proc);
 void sleepProc(PCB *proc, unsigned int sleepTime);
 #endif

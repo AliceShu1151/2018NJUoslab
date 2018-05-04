@@ -221,6 +221,7 @@ int schedule() {
             if(i == -1)
                 i = L;
             Log("schedule  i: %d    current: %d\n",i,current);
+            printf("The pcb[i]:\n");
             print_tf(pcb[i].tf);
             if (pcb[i].state == RUNNABLE) {
                 current = i;

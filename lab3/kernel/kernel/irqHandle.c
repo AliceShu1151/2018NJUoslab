@@ -9,7 +9,7 @@ struct TrapFrame *sys_write(struct TrapFrame *tf){
     int fd = (int)SYSCALL_ARG2(tf);	
     assert(fd == 1); 
     // Attention: base is necessary!
-    const char *buf = (const char *)SYSCALL_ARG3(tf) + (uint32_t)pcb[current].base;
+    const char *buf = (const char *)SYSCALL_ARG3(tf) + (uint32_t)current->base;
     size_t len = (size_t)SYSCALL_ARG4(tf); 
 
     int i;
@@ -29,29 +29,29 @@ struct TrapFrame *GProtectFaultHandle(struct TrapFrame *tf){
 }
 
 struct TrapFrame *sys_fork(struct TrapFrame *tf){
-    assert(current != NILL);
-    pcb[current].tf = tf;
-    pcb[current].state = RUNNABLE;
-    forkProc(&pcb[current]);
+    assert(current != NULL);
+    current->tf = tf;
+    current->state = RUNNABLE;
+    forkProc(current);
     return switchProc(schedule());
 }
 
 struct TrapFrame *sys_sleep(struct TrapFrame *tf){
     unsigned int seconds = SYSCALL_ARG2(tf);
-    assert(current != NILL);
-    pcb[current].tf = tf;
-    Log("sleep: pcb%d\n",current);
-    sleepProc(&pcb[current], seconds);
-    printf("pcb %d state: %d\n",current,pcb[current].state);
+    assert(current != NULL);
+    current->tf = tf;
+    sleepProc(current, seconds);
     return switchProc(schedule());
 }
 
 struct TrapFrame *sys_exit(struct TrapFrame *tf){
     unsigned int status = SYSCALL_ARG2(tf);
     printf("exit, status = %d\n",status);
-    pcb[current].tf = tf;
-    killProc(current);
-    return switchProc(schedule());
+    current->tf = tf;
+    current->state = DEAD;
+    PCB *next = schedule();
+    destroyProc(current);
+    return switchProc(next);
 }
 
 struct TrapFrame *syscallHandle(struct TrapFrame *tf) {
@@ -67,41 +67,22 @@ struct TrapFrame *syscallHandle(struct TrapFrame *tf) {
     return tf;
 }
 
-extern int L;
-extern int next[MAX_NPROC];
-
 struct TrapFrame *timerInterruptHandle(struct TrapFrame *tf){
-    Log("timerInterruptHandle");
-    if (current == NILL) {
-        current = 0;
-        return pcb[current].tf;
+    if (current == NULL) {
+        current = idle;
+        return current->tf;
     }
    
-    if (pcb[current].state == RUNNING)
-        pcb[current].state = RUNNABLE;
+    if (current->state == RUNNING)
+        current->state = RUNNABLE;
     
-    pcb[current].timeCount--;
-    for (int i = L; i != NILL; i = next[i]) {
-        printf("before: pcb[%d] sleepTime: %d\n",i,pcb[i].sleepTime); 
-        printf("before: pcb[%d] state: %d\n",i,pcb[i].state); 
-        if (pcb[i].state == BLOCKED) {
-            pcb[i].sleepTime--;
-            if (pcb[i].sleepTime == 0)
-                pcb[i].state = RUNNABLE;
-        }
-        
-        printf("after: pcb[%d] sleepTime: %d\n",i,pcb[i].sleepTime);  
-    }
+    timeReduceProc();
 
-    pcb[current].tf = tf;
-    Log("current: %d",current);
+    current->tf = tf;
     return switchProc(schedule());
 }
 
 struct TrapFrame *irqHandle(struct TrapFrame *tf) {
-
-    Log("irq:%x",tf->irq);
-
     // Reassign segment register 
     asm volatile("movl %0, %%eax" ::"r"(KSEL(SEG_KDATA)));
     asm volatile("movw %ax, %ds");

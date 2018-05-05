@@ -43,7 +43,7 @@ int uEntry(void){
 		while( i != 0) {
 			i --;
 			printf("Child Process: Pong %d, %d;\n", data, i);
-			sleep(2);
+			sleep(1);
 		}
 		exit(0);
 	}
@@ -52,7 +52,7 @@ int uEntry(void){
 		while( i != 0) {
 			i --;
 			printf("Father Process: Ping %d, %d;\n", data, i);
-			sleep(2);
+			sleep(1);
 		}
 		exit(0);
 	}

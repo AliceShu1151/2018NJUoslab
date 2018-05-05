@@ -18,7 +18,7 @@ enum{
     DEAD
 };
 
-typedef union ProcessTable{
+typedef union ProcessTableBlock{
     uint8_t stack[MAX_STACK_SIZE] PG_ALIGN;
     struct{
         struct TrapFrame *tf;
@@ -28,22 +28,21 @@ typedef union ProcessTable{
         uint32_t pid;
         uint8_t *base;
         int type;
+        union ProcessTableBlock *next;
     };
 } PCB;
 
-#define MAX_NPROC 4
-#define MAX_TIME 5
-#define HZ 100
-#define NILL -1
-extern PCB pcb[MAX_NPROC];
-int current;
+PCB *current;
+PCB *idle;
 
 void initPCB();
-int schedule();
-struct TrapFrame *switchProc(int proc);
-void makeProc(void *entry, int type);
+void createProc(void *entry, int type);
 void timeReduceProc();
+void destroyProc(PCB *proc);
 void forkProc(PCB *proc);
-void killProc(int proc);
 void sleepProc(PCB *proc, unsigned int sleepTime);
+PCB *schedule();
+struct TrapFrame *switchProc(PCB *proc);
+void test();
+
 #endif

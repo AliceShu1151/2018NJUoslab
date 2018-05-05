@@ -11,6 +11,13 @@ enum {
     KTHREAD, UPROC
 };
 
+enum{
+    RUNNABLE,
+    RUNNING,
+    BLOCKED,
+    DEAD
+};
+
 typedef union ProcessTable{
     uint8_t stack[MAX_STACK_SIZE] PG_ALIGN;
     struct{

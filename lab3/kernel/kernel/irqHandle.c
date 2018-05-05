@@ -31,6 +31,7 @@ struct TrapFrame *GProtectFaultHandle(struct TrapFrame *tf){
 struct TrapFrame *sys_fork(struct TrapFrame *tf){
     assert(current != NILL);
     pcb[current].tf = tf;
+    pcb[current].state = RUNNABLE;
     forkProc(&pcb[current]);
     return switchProc(schedule());
 }
@@ -66,9 +67,32 @@ struct TrapFrame *syscallHandle(struct TrapFrame *tf) {
     return tf;
 }
 
+extern int L;
+extern int next[MAX_NPROC];
+
 struct TrapFrame *timerInterruptHandle(struct TrapFrame *tf){
     Log("timerInterruptHandle");
-    timeReduceProc();
+    if (current == NILL) {
+        current = 0;
+        return pcb[current].tf;
+    }
+   
+    if (pcb[current].state == RUNNING)
+        pcb[current].state = RUNNABLE;
+    
+    pcb[current].timeCount--;
+    for (int i = L; i != NILL; i = next[i]) {
+        printf("before: pcb[%d] sleepTime: %d\n",i,pcb[i].sleepTime); 
+        printf("before: pcb[%d] state: %d\n",i,pcb[i].state); 
+        if (pcb[i].state == BLOCKED) {
+            pcb[i].sleepTime--;
+            if (pcb[i].sleepTime == 0)
+                pcb[i].state = RUNNABLE;
+        }
+        
+        printf("after: pcb[%d] sleepTime: %d\n",i,pcb[i].sleepTime);  
+    }
+
     pcb[current].tf = tf;
     Log("current: %d",current);
     return switchProc(schedule());

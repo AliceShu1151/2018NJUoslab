@@ -2,20 +2,14 @@
 #include "klib.h"
 #include "debug.h"
 
-enum{
-    RUNNABLE,
-    RUNNING,
-    BLOCKED,
-    DEAD
-};
 
 
 PCB pcb[MAX_NPROC];
 static int nproc = 0;
 static int npid = 1;
-static int next[MAX_NPROC];
+int next[MAX_NPROC];
 static int free;
-static int L;
+int L;
 // PCB *current = NULL;
 
 #define MAX_APP_SIZE    0X100000
@@ -124,7 +118,7 @@ void printFreeL(){
 
 void initPCB(){
     int i;
-    current = 0;
+    current = NILL;
 
     free = 0;
     L = NILL;
@@ -191,14 +185,16 @@ void forkProc(PCB *proc){
 
 void killProc(int proc){
     assert(current != NILL);
-    int  i = L;
+    pcb[proc].state = DEAD;
 
-    while(next[i] != current);
+    // int  i = L;
 
-    pcb[current].state = DEAD;
-    next[i] = next[current];
-    next[current] = free;
-    free = current;
+    // while(next[i] != current);
+
+    // pcb[current].state = DEAD;
+    // next[i] = next[current];
+    // next[current] = free;
+    // free = current;
 }
 
 void sleepProc(PCB *proc, unsigned int  sleepTime){
@@ -207,41 +203,27 @@ void sleepProc(PCB *proc, unsigned int  sleepTime){
 }
 
 int schedule() {
-    int i;
-    i = next[current];
+    if (pcb[current].state == RUNNABLE && pcb[current].timeCount > 0)
+        return current;
+
+    int i = next[current];
     if(i == NILL)
         i = L;
     
-    printFreeL();
-    printf("timeCount: %d\n",pcb[current].timeCount);
-
-    if (pcb[current].timeCount == 0){
-        while (i != current){
-            // Log("the link:");
-            // printFreeL();
-            Log("schedule  i: %d    current: %d\n",i,current);
-
-            printf("pcb[%d] sleepTime: %d\n",i,pcb[current].sleepTime); 
-            printf("pcb[%d] state: %d\n",i,pcb[current].state);
-            if (pcb[i].state == RUNNABLE) {
-                pcb[current].timeCount = MAX_TIME;
-                Log("schedule: schedule to pcb[%d]\n", i);
-                // print_tf(pcb[i].tf);
-                return i;
-            }
-            else if (pcb[i].state == BLOCKED){
-                if (pcb[i].sleepTime == 0){
-                    pcb[i].state = RUNNABLE;
-                    Log("schdule: pcb[%d] wake up!\n", i);
-                }
-            }
-
-            i = next[i];
-            if(i == NILL)
-                i = L;
-        } 
+    while (1) {
+        if (pcb[i].state == RUNNABLE) {
+            Log("schedule: from %d to %d", current, i);
+            return i;
+        }
+        if (i == current)
+            break;
+        i = next[i];
+        if(i == NILL)
+            i = L;
     }
-    return current;
+
+    Panic("Should not reach here!");
+    return 0;
 }
 
 struct TrapFrame *switchProc(int proc) {
@@ -249,39 +231,59 @@ struct TrapFrame *switchProc(int proc) {
     extern TSS tss;
     extern SegDesc gdt[NR_SEGMENTS];
 
-    pcb[proc].state = RUNNING;
-    Log("proc  i: %d  current: %d\n",proc,current);
-    if (current == proc){
-        return pcb[current].tf;
-    }
-    current = proc;
-    pcb[current].timeCount = MAX_TIME;
+    current = proc;    
     tss.esp0 = (uint32_t)(pcb[current].stack + MAX_STACK_SIZE);
 	tss.ss0  = KSEL(SEG_KDATA);
     if (pcb[current].type == UPROC) {
         gdt[SEG_UCODE] = SEG(STA_X | STA_R, (uint32_t)pcb[current].base, 0xffffffff, DPL_USER);
         gdt[SEG_UDATA] = SEG(STA_W,         (uint32_t)pcb[current].base, 0xffffffff, DPL_USER);
     }
+
+    if (pcb[current].timeCount == 0)
+        pcb[current].timeCount = MAX_TIME;
+    pcb[proc].state = RUNNING;
     return pcb[current].tf;
 }
 
-void timeReduceProc()
-{
+void timeReduceProc() {
 	int i;
-    for (i = L; i != NILL; i = next[i])
-    {
-         printf("pcb[%d] sleepTime: %d\n",i,pcb[current].sleepTime); 
-         printf("pcb[%d] state: %d\n",i,pcb[current].state); 
-        if (pcb[i].state == BLOCKED)
+
+    pcb[current].timeCount--;
+
+    for (i = L; i != NILL; i = next[i]) {
+        printf("pcb[%d] sleepTime: %d\n",i,pcb[current].sleepTime); 
+        printf("pcb[%d] state: %d\n",i,pcb[current].state); 
+        if (pcb[i].state == BLOCKED) {
             pcb[i].sleepTime--;
-        if (pcb[i].sleepTime == 0)
-            pcb[i].state = RUNNABLE;
+            if (pcb[i].sleepTime == 0)
+                pcb[i].state = RUNNABLE;
+        }
          printf("pcb[%d] sleepTime: %d\n",i,pcb[current].sleepTime);  
     }
 
     // printf("current timeCount: %d\n",pcb[current].timeCount);
-    pcb[current].timeCount--;
-    // printf("current timeCount: %d\n",pcb[current].timeCount);
-    if (pcb[current].timeCount == 0)
-        pcb[current].state = RUNNABLE;
+    
 }
+
+// PCB *idle;
+
+// PCB *allocPCB();
+// void freePCB(PCB *);
+// void initPCB() {
+//     // init list
+//     // init free
+//     idle = allocPCB();
+//     makeProc(proc, IDLE, type);
+// }
+
+// void addList(PCB *);
+// void removeList(PCB *);
+
+// void makeProc(PCB *proc, void *entry, int type);
+
+// void createProc(void *entry, int type) {
+//     PCB *proc = allocPCB();
+//     makeProc(proc, entry, type);
+//     addList(proc);
+// }
+

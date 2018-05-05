@@ -19,10 +19,10 @@ void putChar(char ch) {
 	while (serialIdle() != TRUE);
 	outByte(SERIAL_PORT, ch);
 }
-
+static int row = 8, col = 0;
 /* print to video segment */
 void video_print(char c) {
-	static int row = 8, col = 0;
+
 	if (c == '\n') {
 		row++;	col = 0;
 		return;

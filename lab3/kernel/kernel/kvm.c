@@ -52,23 +52,7 @@ void initSeg() {
 	
 }
 
-// void enterUserSpace(uint32_t entry) {
-// 	/*
-// 	 * Before enter user space 
-// 	 * you should set the right segment registers here
-// 	 * and use 'iret' to jump to ring3
-// 	 */
-// 	asm volatile("pushl %0":: "r"(USEL(SEG_UDATA)));	// %ss
-// 	asm volatile("pushl %0":: "r"(128 << 20));		// %esp 128MB
-// 	asm volatile("pushfl");					// %eflags
-// 	asm volatile("pushl %0":: "r"(USEL(SEG_UCODE)));	// %cs
-// 	asm volatile("pushl %0":: "r"(entry));		
-// 	asm volatile("iret"); // return to user space	
-// }
-
 void *loadUMain(void) {
-
-	/*加载用户程序至内存*/
 	/* load main code*/
 	char *buf, *dst, *src;
 	struct ELFHeader *elf;
@@ -85,12 +69,12 @@ void *loadUMain(void) {
 
 	for (i = 0; i < elf->phnum; i++)
 	{
-		/* laod each program segment to their virtual address
-		 * type=1 : LOAD section */
+		// laod each program segment to their virtual address
+		// type=1 : LOAD section 
 		if(ph->type == 1)	
 		{
-			/* the location of the segment is mapped to the virtual address space
-			 * (for the segment of the PT_LOAD type*/
+			// the location of the segment is mapped to the virtual address space
+			// (for the segment of the PT_LOAD type
 			dst = (char *)ph->vaddr;
 			src = buf + ph->off;
 
@@ -101,8 +85,7 @@ void *loadUMain(void) {
 		}
 		ph++;
 	}
-	// /* enter user space */
-	// enterUserSpace(elf->entry);
+	// enter user space 
 	return (void *)elf->entry;
 }
 

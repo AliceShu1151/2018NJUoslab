@@ -81,16 +81,20 @@ struct TrapFrame *makeTrapFrame(uint32_t *kstack, uint32_t*ustack, void *entry, 
     return (struct TrapFrame *)kstack;
 }
 
-int getPCBBlock(){
+int newPCB(){
     int newProc;
-    
-    if (free == -1){
+    newProc = free;
+    free = next[free];
+    return newProc;
+}
+
+int getPCB(){
+    if (free == NILL){
         Log("NO space for new pcb");
         assert(0);
     }
 
-    newProc = free;
-    free = next[free];
+    int newProc = newPCB();
 
     next[newProc] = L;
     L = newProc;
@@ -99,44 +103,43 @@ int getPCBBlock(){
     return newProc;
 }
 
-void print_List(){
+void printFreeL(){
     int i;
     
     i = L;
     printf("\nL:");
-    while (i != -1){
+    while (i != NILL){
         printf("%d ",i);
         i = next[i];
     }
 
     printf("\nfree:");
     i = free;
-    while (i != -1){
+    while (i != NILL){
         printf("%d ",i);
         i = next[i];
     }
     printf("\n");
 }
 
-void initPCBLink(){
+void initPCB(){
     int i;
+    current = 0;
 
     free = 0;
-    L = -1;
+    L = NILL;
     for (i = 0; i < MAX_NPROC - 1; ++i)
         next[i] = i + 1;
-    next[MAX_NPROC - 1] = -1;
-    print_List();
+    next[MAX_NPROC - 1] = NILL;
+    printFreeL();
 }
 
 void makeProc(void *entry, int type){
-    // #define MAX_NPROC 4
-    // static PCB pcb[MAX_NPROC];
     assert(nproc < MAX_NPROC);
 
-    int i = getPCBBlock();
+    int i = getPCB();
     
-    print_List();
+    printFreeL();
     // Log("\ncurrent:%d",current);
 
     if (type == UPROC){
@@ -155,7 +158,7 @@ void makeProc(void *entry, int type){
 } 
 
 void forkProc(PCB *proc){
-    int i = getPCBBlock();
+    int i = getPCB();
 
     // copy kernel stack (trap frame included)
     memcpy(pcb[i].stack, proc->stack, MAX_STACK_SIZE);
@@ -187,7 +190,7 @@ void forkProc(PCB *proc){
 
 
 void killProc(int proc){
-    assert(current != -1);
+    assert(current != NILL);
     int  i = L;
 
     while(next[i] != current);
@@ -206,52 +209,53 @@ void sleepProc(PCB *proc, unsigned int  sleepTime){
 int schedule() {
     int i;
     i = next[current];
-    if(i == -1)
+    if(i == NILL)
         i = L;
     
-    pcb[current].state = RUNNABLE;
-    
-    print_List();
+    printFreeL();
     printf("timeCount: %d\n",pcb[current].timeCount);
 
-    //if (pcb[current].timeCount == 0){
+    if (pcb[current].timeCount == 0){
         while (i != current){
-            Log("the link:");
-            print_List();
-            if(i == -1)
-                i = L;
+            // Log("the link:");
+            // printFreeL();
             Log("schedule  i: %d    current: %d\n",i,current);
-            printf("The pcb[i]:\n");
-            print_tf(pcb[i].tf);
+
+            printf("pcb[%d] sleepTime: %d\n",i,pcb[current].sleepTime); 
+            printf("pcb[%d] state: %d\n",i,pcb[current].state);
             if (pcb[i].state == RUNNABLE) {
-                current = i;
                 pcb[current].timeCount = MAX_TIME;
                 Log("schedule: schedule to pcb[%d]\n", i);
                 // print_tf(pcb[i].tf);
                 return i;
             }
             else if (pcb[i].state == BLOCKED){
-                if (pcb[i].sleepTime == 0)
+                if (pcb[i].sleepTime == 0){
                     pcb[i].state = RUNNABLE;
-                Log("schdule: pcb[%d] wake up!\n", i);
+                    Log("schdule: pcb[%d] wake up!\n", i);
+                }
             }
+
             i = next[i];
+            if(i == NILL)
+                i = L;
         } 
-    //}
+    }
     return current;
 }
 
 struct TrapFrame *switchProc(int proc) {
-    assert (proc != -1);
+    assert (proc != NILL);
     extern TSS tss;
     extern SegDesc gdt[NR_SEGMENTS];
 
     pcb[proc].state = RUNNING;
-    // Log("proc  i: %d    current: %d\n",proc,current);
-    if (current == proc)
+    Log("proc  i: %d  current: %d\n",proc,current);
+    if (current == proc){
         return pcb[current].tf;
-    
+    }
     current = proc;
+    pcb[current].timeCount = MAX_TIME;
     tss.esp0 = (uint32_t)(pcb[current].stack + MAX_STACK_SIZE);
 	tss.ss0  = KSEL(SEG_KDATA);
     if (pcb[current].type == UPROC) {
@@ -264,15 +268,20 @@ struct TrapFrame *switchProc(int proc) {
 void timeReduceProc()
 {
 	int i;
-    for (i = L; i != -1; i = next[i])
+    for (i = L; i != NILL; i = next[i])
     {
+         printf("pcb[%d] sleepTime: %d\n",i,pcb[current].sleepTime); 
+         printf("pcb[%d] state: %d\n",i,pcb[current].state); 
         if (pcb[i].state == BLOCKED)
             pcb[i].sleepTime--;
         if (pcb[i].sleepTime == 0)
             pcb[i].state = RUNNABLE;
+         printf("pcb[%d] sleepTime: %d\n",i,pcb[current].sleepTime);  
     }
 
+    // printf("current timeCount: %d\n",pcb[current].timeCount);
     pcb[current].timeCount--;
-    if (pcb[current].sleepTime == 0)
+    // printf("current timeCount: %d\n",pcb[current].timeCount);
+    if (pcb[current].timeCount == 0)
         pcb[current].state = RUNNABLE;
 }

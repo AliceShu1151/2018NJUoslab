@@ -27,10 +27,11 @@ typedef union ProcessTable{
 #define MAX_NPROC 4
 #define MAX_TIME 5
 #define HZ 100
+#define NILL -1
 extern PCB pcb[MAX_NPROC];
 int current;
 
-void initPCBLink();
+void initPCB();
 int schedule();
 struct TrapFrame *switchProc(int proc);
 void makeProc(void *entry, int type);

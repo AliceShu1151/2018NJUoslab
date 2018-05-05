@@ -19,13 +19,13 @@ void kEntry(void) {
 	initIntr(); // iniialize 8259a
 	initSeg(); // initialize gdt, tss
 	
-	initPCBLink();
+	initPCB();
 
 	Log("create pcb for kenel");
 	makeProc((void *)IDLE, KTHREAD);
 	Log("create pcb for user");
 	makeProc(loadUMain(), UPROC);
-	current = 1;
+
 	enableInterrupt();
 	while(1);
 	assert(0);

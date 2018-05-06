@@ -13,11 +13,8 @@ void kEntry(void) {
 	initSeg(); // initialize gdt, tss
 	initPCB();
 
-	createProc(loadUMain(), UPROC);
-
 	//test();
 
-	//Panic("Stop here");
 	enableInterrupt();
 	while(1);
 	assert(0);

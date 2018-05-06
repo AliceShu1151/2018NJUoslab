@@ -5,7 +5,7 @@
 #define SYS_sleep	3
 #define SYS_exit	4
 
-int32_t syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx){
+int32_t syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
 	int32_t ret = -1;
 	asm volatile("int $0x80": "=a"(ret) : "a"(eax), "b"(ebx), "c"(ecx), "d"(edx));
 	return ret;
@@ -20,10 +20,10 @@ unsigned int sleep(unsigned int seconds) {
     return syscall(SYS_sleep, seconds, 0, 0);
 }
 
-pid_t fork(){
+pid_t fork() {
 	return syscall(SYS_fork, 0, 0, 0);
 }
 
-void exit(int status){
+void exit(int status) {
 	syscall(SYS_exit, status, 0, 0);
 }

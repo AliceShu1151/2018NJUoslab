@@ -3,15 +3,16 @@
 #include "device.h"
 #include "debug.h"
 
-#define MAX_NPROC 4
-#define MAX_TIME 2
+#define MAX_NPROC 10
+#define MAX_TIME 5
 
 PCB pcb[MAX_NPROC];
 static int npid = 0;
+PCB *idle;
 PCB *free;
 PCB *L;
 PCB *current;
-PCB *idle;
+
 
 #define MAX_APP_SIZE    0X100000
 #define APP_START       0x200000
@@ -25,10 +26,7 @@ void freePCB(PCB * recyclePCB);
 void addList(PCB *proc);
 PCB *removeList(int pid);
 void makeProc(PCB *proc, void *entry, int type);
-void destroyProc(PCB *proc);
-void makeProc(PCB *proc, void *entry, int type);
 void createProc(void *entry, int type);
-
 
 void printList(){
     PCB *cur;
@@ -110,14 +108,14 @@ struct TrapFrame *makeTrapFrame(uint32_t *kstack, uint32_t*ustack, void *entry, 
     return (struct TrapFrame *)kstack;
 }
 
-static void IDLE(void){
+static void IDLE(void) {
 	while(1){
 		printf(".");
 		waitForInterrupt();
 	}
 }
 
-void initPCB(){
+void initPCB() {
     current = NULL;
     L = NULL;
     free = pcb;
@@ -127,9 +125,11 @@ void initPCB(){
 
     idle = allocPCB();
     makeProc(idle, IDLE, KTHREAD);
+
+	createProc(loadUMain(), UPROC);
 }
 
-PCB *allocPCB(){
+PCB *allocPCB() {
     if (free == NULL)
         Panic("No space for malloc!");
     PCB *newPcb = free;
@@ -185,7 +185,6 @@ PCB *removeList(int pid) {
     return NULL;
 }
 
-
 void makeProc(PCB *proc, void *entry, int type) {
     if (type == UPROC){
         proc->base = app_end - APP_START;
@@ -210,7 +209,7 @@ void createProc(void *entry, int type) {
     addList(proc);
 }
 
-void forkProc(PCB *fatherProc){
+void forkProc(PCB *fatherProc) {
     PCB *childProc = allocPCB();
 
     // copy kernel stack (trap frame included)
@@ -225,6 +224,7 @@ void forkProc(PCB *fatherProc){
 
     // reset return value
     childProc->tf->eax = 0;
+    fatherProc->tf->eax = childProc->pid;
 
     // set base and allocate a new app space
     childProc->base = app_end - APP_START;
@@ -243,12 +243,12 @@ void forkProc(PCB *fatherProc){
 }
 
 
-void destroyProc(PCB *proc){
+void destroyProc(PCB *proc) {
     assert(current != NULL);
     freePCB(removeList(proc->pid));
 }
 
-void sleepProc(PCB *proc, unsigned int sleepTime){
+void sleepProc(PCB *proc, unsigned int sleepTime) {
     proc->state = BLOCKED;
     proc->sleepTime = sleepTime * HZ;
 }
@@ -289,36 +289,11 @@ PCB *schedule() {
             Log("schedule: from %d to idle", current->pid);
             return idle;
         }
-            
 
         i = i->next;
         if(i == NULL)
             i = L;
     }
-
-    // if (L == NULL)
-    //     return idle;
-
-    // if (current->state == RUNNABLE && current->timeCount > 0)
-    //     return current;
-
-    // PCB *i = current;
-    // if(i == NULL)
-    //     i = L;
-    
-    // while (1) {
-    //     if (i->state == RUNNABLE) {
-    //         Log("schedule: from %d to %d", current->pid, i->pid);
-    //         return i;
-    //     }
-    //     if (i == current)
-    //         break;
-
-    //     i = i->next;
-    //     if(i == NULL)
-    //         i = L;
-    // }
-
     Panic("Should not reach here!");
     return idle;
 }
@@ -364,6 +339,9 @@ void empty2() {
 }
 
 void test() {
+    Log("test Log.");
+
+	
     printList();
     
     PCB *proc1 = allocPCB();
@@ -382,6 +360,8 @@ void test() {
     freePCB(removeList(proc1->pid));
     freePCB(removeList(proc2->pid));
     printList();
+
+    Panic("test Panic:Stop here");
 }
 
 

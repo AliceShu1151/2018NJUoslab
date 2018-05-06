@@ -4,7 +4,7 @@
 #include "debug.h"
 #include<stdarg.h>
 
-struct TrapFrame *sys_write(struct TrapFrame *tf){	
+struct TrapFrame *sys_write(struct TrapFrame *tf) {	
     // only enable stdout
     int fd = (int)SYSCALL_ARG2(tf);	
     assert(fd == 1); 
@@ -22,13 +22,13 @@ struct TrapFrame *sys_write(struct TrapFrame *tf){
     return tf;
 }
 
-struct TrapFrame *GProtectFaultHandle(struct TrapFrame *tf){
+struct TrapFrame *GProtectFaultHandle(struct TrapFrame *tf) {
     printf("GProtectFaultHandle\n");
     assert(0);
     return tf;
 }
 
-struct TrapFrame *sys_fork(struct TrapFrame *tf){
+struct TrapFrame *sys_fork(struct TrapFrame *tf) {
     assert(current != NULL);
     current->tf = tf;
     current->state = RUNNABLE;
@@ -36,7 +36,7 @@ struct TrapFrame *sys_fork(struct TrapFrame *tf){
     return switchProc(schedule());
 }
 
-struct TrapFrame *sys_sleep(struct TrapFrame *tf){
+struct TrapFrame *sys_sleep(struct TrapFrame *tf) {
     unsigned int seconds = SYSCALL_ARG2(tf);
     assert(current != NULL);
     current->tf = tf;
@@ -44,7 +44,7 @@ struct TrapFrame *sys_sleep(struct TrapFrame *tf){
     return switchProc(schedule());
 }
 
-struct TrapFrame *sys_exit(struct TrapFrame *tf){
+struct TrapFrame *sys_exit(struct TrapFrame *tf) {
     unsigned int status = SYSCALL_ARG2(tf);
     printf("exit, status = %d\n",status);
     current->tf = tf;
@@ -67,7 +67,7 @@ struct TrapFrame *syscallHandle(struct TrapFrame *tf) {
     return tf;
 }
 
-struct TrapFrame *timerInterruptHandle(struct TrapFrame *tf){
+struct TrapFrame *timerInterruptHandle(struct TrapFrame *tf) {
     if (current == NULL) {
         current = idle;
         return current->tf;

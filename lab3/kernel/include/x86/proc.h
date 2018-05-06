@@ -36,9 +36,8 @@ PCB *current;
 PCB *idle;
 
 void initPCB();
-void createProc(void *entry, int type);
-void timeReduceProc();
 void destroyProc(PCB *proc);
+void timeReduceProc();
 void forkProc(PCB *proc);
 void sleepProc(PCB *proc, unsigned int sleepTime);
 PCB *schedule();

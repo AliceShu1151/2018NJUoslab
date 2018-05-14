@@ -5,11 +5,11 @@ int uEntry(void){
 
 	int i = 4;
     int ret = 0;
-    // int value = 2;
+    int value = 2;
 
-    // sem_t sem;
+    sem_t sem;
     printf("Father Process: Semaphore Initializing.\n");
-    // ret = sem_init(&sem, value);
+    ret = sem_init(&sem, value);
     if (ret == -1) {
         printf("Father Process: Semaphore Initializing Failed.\n");
         exit(0);
@@ -20,11 +20,11 @@ int uEntry(void){
         while( i != 0) {
             i --;
             printf("Child Process: Semaphore Waiting.\n");
-            // sem_wait(&sem);
+            sem_wait(&sem);
             printf("Child Process: In Critical Area.\n");
         }
         printf("Child Process: Semaphore Destroying.\n");
-        // sem_destroy(&sem);
+        sem_destroy(&sem);
         exit(0);
     }
     else if (ret != -1) {
@@ -33,10 +33,10 @@ int uEntry(void){
             printf("Father Process: Sleeping.\n");
             sleep(3);
             printf("Father Process: Semaphore Posting.\n");
-            // sem_post(&sem);
+            sem_post(&sem);
         }
         printf("Father Process: Semaphore Destroying.\n");
-        // sem_destroy(&sem);
+        sem_destroy(&sem);
         exit(0);
     }
     

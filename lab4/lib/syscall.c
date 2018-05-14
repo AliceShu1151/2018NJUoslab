@@ -1,9 +1,10 @@
 #include "lib.h"
 #include<stdarg.h>
-#define	SYS_write	1 
-#define SYS_fork	2
-#define SYS_sleep	3
-#define SYS_exit	4
+
+enum {
+    SYS_write, SYS_fork, SYS_sleep, SYS_exit, 
+    SYS_sem_init, SYS_sem_post, SYS_sem_wait, SYS_sem_destroy
+};
 
 int32_t syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx) {
 	int32_t ret = -1;
@@ -26,4 +27,21 @@ pid_t fork() {
 
 void exit(int status) {
 	syscall(SYS_exit, status, 0, 0);
+}
+
+
+sem_t sem_init(sem_t *sem, uint32_t value) {
+	return syscall(SYS_sem_init, (uint32_t)sem, value, 0);
+}
+
+sem_t sem_post(sem_t *sem) {
+	return syscall(SYS_sem_init, (uint32_t)sem, 0, 0);
+}
+
+sem_t sem_wait(sem_t *sem) {
+	return syscall(SYS_sem_wait, (uint32_t)sem, 0, 0);
+}
+
+sem_t sem_destroy(sem_t *sem) {
+	return syscall(SYS_sem_init, (uint32_t)sem, 0, 0);
 }

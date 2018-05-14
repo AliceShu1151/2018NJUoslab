@@ -54,13 +54,34 @@ struct TrapFrame *sys_exit(struct TrapFrame *tf) {
     return switchProc(next);
 }
 
+struct TrapFrame *sys_sem_init(struct TrapFrame *tf) {
+    return tf;
+}
+
+struct TrapFrame *sys_sem_post(struct TrapFrame *tf) {
+    return tf;
+}
+
+struct TrapFrame *sys_sem_wait(struct TrapFrame *tf) {
+    return tf;
+}
+
+struct TrapFrame *sys_sem_destroy(struct TrapFrame *tf) {
+    return tf;
+}
+
+
 struct TrapFrame *syscallHandle(struct TrapFrame *tf) {
     // systerm call
     switch(SYSCALL_ARG1(tf)) {
-        case SYS_write: return sys_write(tf); 	break;
-        case SYS_fork:	return sys_fork(tf);	break;
-        case SYS_sleep: return sys_sleep(tf);	break;
-        case SYS_exit:  return sys_exit(tf);	break;
+        case SYS_write:         return sys_write(tf); 	    break;
+        case SYS_fork:	        return sys_fork(tf);	    break;
+        case SYS_sleep:         return sys_sleep(tf);	    break;
+        case SYS_exit:          return sys_exit(tf);	    break;
+        case SYS_sem_init:      return sys_sem_init(tf);    break;
+        case SYS_sem_post:      return sys_sem_post(tf);    break;
+        case SYS_sem_wait:      return sys_sem_wait(tf);    break;
+        case SYS_sem_destroy:   return sys_sem_destroy(tf); break;
         // we can add more syscall 
         default: assert(0);
     }

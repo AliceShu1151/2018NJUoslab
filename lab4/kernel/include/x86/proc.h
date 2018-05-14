@@ -29,6 +29,7 @@ typedef union ProcessTableBlock{
         uint8_t *base;
         int type;
         union ProcessTableBlock *next;
+        union ProcessTableBlock *semNext;
     };
 } PCB;
 

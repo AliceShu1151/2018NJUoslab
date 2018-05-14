@@ -1,0 +1,5 @@
+*.bin
+*.elf
+os.img
+.vscode
+*.o

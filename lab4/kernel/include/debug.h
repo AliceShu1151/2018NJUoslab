@@ -4,7 +4,7 @@
 //#include <am.h>
 #include "klib.h"
 
-//#define LOG
+#define LOG
 #define DEBUG
 // #define TRACE
 

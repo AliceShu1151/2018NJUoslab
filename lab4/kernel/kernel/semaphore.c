@@ -5,6 +5,8 @@
 
 #define MAX_NSEMA 10
 
+struct Semaphore s;
+
 void sleep(Semaphore *s);
 void wakeup(Semaphore *s);
 
@@ -28,7 +30,11 @@ void V(Semaphore *s) {
         wakeup(s);
 }
 
-int sem_init(sem_t *sem, uint32_t value) {
+int semInit(struct TrapFrame *tf) {
+    s.value = SYSCALL_ARG3(tf);
+    s.listStart = NULL;
+    s.listEnd = NULL; 
+    SYSCALL_ARG2(tf) = (sem_t)(&s);
     return 0;
 }
 

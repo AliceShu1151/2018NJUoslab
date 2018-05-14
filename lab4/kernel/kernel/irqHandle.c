@@ -55,6 +55,12 @@ struct TrapFrame *sys_exit(struct TrapFrame *tf) {
 }
 
 struct TrapFrame *sys_sem_init(struct TrapFrame *tf) {
+    int ret = semInit(tf);
+    if (ret == 0)
+        SYSCALL_ARG1(tf) = 0;
+    else
+        SYSCALL_ARG1(tf) = -1;
+    Log("s.value = %d   sem = %d    ret = %d", SYSCALL_ARG3(tf), SYSCALL_ARG2(tf), SYSCALL_ARG1(tf));
     return tf;
 }
 

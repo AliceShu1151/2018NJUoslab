@@ -12,6 +12,8 @@ void kEntry(void) {
 	initIntr(); // iniialize 8259a
 	initSeg(); // initialize gdt, tss
 	initPCB();
+	initVga();
+	initSem();
 
 	//test();
 

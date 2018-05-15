@@ -20,9 +20,18 @@ void putChar(char ch) {
 	outByte(SERIAL_PORT, ch);
 }
 
+
+void updateCursor(int r, int c) {
+	uint16_t pos = r * 80 + c;
+	outByte(0x3d4, 0x0f);
+	outByte(0x3d5, 0xff & pos);
+	outByte(0x3d4, 0x0e);
+	outByte(0x3d5, pos >> 8);
+}
+
 /* print to video segment */
 void video_print(char c) {
-	static int row = 8, col = 0;
+	static int row = 0, col = 0;
 	if (c == '\n') {
 		row++;	col = 0;
 		return;
@@ -36,5 +45,12 @@ void video_print(char c) {
 	if (col == 80) {
 		row++;	col = 0;
 	}
+	updateCursor(row, col);
 }
-
+// clear screen
+void initVga() {
+	updateCursor(0, 0);
+	for (int i = 0; i < 10 * 80; i ++) {
+		*((uint16_t *)0xb8000 + i) = (0x0c << 8);
+	}
+}

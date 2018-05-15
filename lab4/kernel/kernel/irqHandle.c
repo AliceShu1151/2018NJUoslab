@@ -55,30 +55,37 @@ struct TrapFrame *sys_exit(struct TrapFrame *tf) {
 }
 
 struct TrapFrame *sys_sem_init(struct TrapFrame *tf) {
-    int ret = semInit(tf);
-    if (ret == 0)
-        SYSCALL_ARG1(tf) = 0;
-    else
-        SYSCALL_ARG1(tf) = -1;
-    Log("s.value = %d   sem = %d    ret = %d", SYSCALL_ARG3(tf), SYSCALL_ARG2(tf), SYSCALL_ARG1(tf));
+    int value = SYSCALL_ARG3(tf);
+    sem_t *usr_sem = (sem_t *)SYSCALL_ARG2(tf) + (uint32_t)current->base;
+    SYSCALL_ARG1(tf) = semCreate(usr_sem, value);
     return tf;
 }
 
 struct TrapFrame *sys_sem_post(struct TrapFrame *tf) {
+    sem_t *semID = (sem_t *)SYSCALL_ARG2(tf) + (uint32_t)current->base;
+    SYSCALL_ARG1(tf) = semPost(semID);
+    Log("user_semID: %d", *semID);
     return tf;
 }
 
 struct TrapFrame *sys_sem_wait(struct TrapFrame *tf) {
+    sem_t *semID = (sem_t *)SYSCALL_ARG2(tf) + (uint32_t)current->base;
+    SYSCALL_ARG1(tf) = semWait(semID, current);
+    if (current->state == BLOCKED) 
+        return  switchProc(schedule());
     return tf;
 }
 
 struct TrapFrame *sys_sem_destroy(struct TrapFrame *tf) {
+    sem_t *freeSem = (sem_t *)SYSCALL_ARG2(tf) + (uint32_t)current->base;
+    semDestroy(freeSem);
     return tf;
 }
 
-
 struct TrapFrame *syscallHandle(struct TrapFrame *tf) {
     // systerm call
+    if(SYSCALL_ARG1(tf) != SYS_write)
+        Log("tf->eax: %d", SYSCALL_ARG1(tf));
     switch(SYSCALL_ARG1(tf)) {
         case SYS_write:         return sys_write(tf); 	    break;
         case SYS_fork:	        return sys_fork(tf);	    break;

@@ -156,7 +156,7 @@ void addList(PCB *proc) {
     }
     // proc->next = L;
     // L = proc;
-    printList();
+    //printList();
 }
 
 PCB *removeList(int pid) {
@@ -200,7 +200,7 @@ void makeProc(PCB *proc, void *entry, int type) {
     proc->state = RUNNABLE;
     proc->type = type; 
 
-    Log("makeProc: pid: %d", proc->pid);
+    //Log("makeProc: pid: %d", proc->pid);
 } 
 
 void createProc(void *entry, int type) {
@@ -249,7 +249,7 @@ void destroyProc(PCB *proc) {
 }
 
 void sleepProc(PCB *proc, unsigned int sleepTime) {
-    proc->state = BLOCKED;
+    proc->state = SLEEPING;
     proc->sleepTime = sleepTime * HZ;
 }
 
@@ -321,7 +321,7 @@ void timeReduceProc() {
 
     current->timeCount--;
     for (PCB *i = L; i != NULL; i = i->next) {
-        if (i->state == BLOCKED) {
+        if (i->state == SLEEPING) {
             i->sleepTime--;
             if (i->sleepTime == 0)
                 i->state = RUNNABLE;
@@ -363,27 +363,3 @@ void test() {
 
     Panic("test Panic:Stop here");
 }
-
-
-// PCB *idle;
-
-// PCB *allocPCB();
-// void freePCB(PCB *);
-// void initPCB() {
-//     // init list
-//     // init free
-//     idle = allocPCB();
-//     makeProc(proc, IDLE, type);
-// }
-
-// void addList(PCB *);
-// void removeList(PCB *);
-
-// void makeProc(PCB *proc, void *entry, int type);
-
-// void createProc(void *entry, int type) {
-//     PCB *proc = allocPCB();
-//     makeProc(proc, entry, type);
-//     addList(proc);
-// }
-

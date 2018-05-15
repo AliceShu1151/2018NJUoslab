@@ -35,7 +35,7 @@ sem_t sem_init(sem_t *sem, uint32_t value) {
 }
 
 sem_t sem_post(sem_t *sem) {
-	return syscall(SYS_sem_init, (uint32_t)sem, 0, 0);
+	return syscall(SYS_sem_post, (uint32_t)sem, 0, 0);
 }
 
 sem_t sem_wait(sem_t *sem) {
@@ -43,5 +43,5 @@ sem_t sem_wait(sem_t *sem) {
 }
 
 sem_t sem_destroy(sem_t *sem) {
-	return syscall(SYS_sem_init, (uint32_t)sem, 0, 0);
+	return syscall(SYS_sem_destroy, (uint32_t)sem, 0, 0);
 }

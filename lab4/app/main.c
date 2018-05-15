@@ -31,7 +31,7 @@ int uEntry(void){
         while( i != 0) {
             i --;
             printf("Father Process: Sleeping.\n");
-            sleep(3);
+            sleep(1);
             printf("Father Process: Semaphore Posting.\n");
             sem_post(&sem);
         }
@@ -52,7 +52,7 @@ int uEntry(void){
 
 	// return 0;
 
-	// int data = 0;
+    // int data = 0;
 
 	// int ret = fork();
 	// int i = 8;

@@ -25,8 +25,8 @@ pid_t fork() {
 	return syscall(SYS_fork, 0, 0, 0);
 }
 
-void exit(int status) {
-	syscall(SYS_exit, status, 0, 0);
+void exit() {
+	syscall(SYS_exit, 0, 0, 0);
 }
 
 

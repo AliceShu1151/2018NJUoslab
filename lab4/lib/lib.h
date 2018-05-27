@@ -15,7 +15,7 @@ void printf(const char *format,...);
 int write(int fd, const void *buf, size_t count);
 pid_t fork();
 unsigned int sleep(unsigned int seconds);
-void exit(int status);
+void exit();
 sem_t sem_init(sem_t *sem, uint32_t value);
 sem_t sem_post(sem_t *sem);
 sem_t sem_wait(sem_t *sem);

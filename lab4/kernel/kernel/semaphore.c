@@ -6,7 +6,7 @@
 #define MAX_NSEMA 10
 
 struct Semaphore sem[MAX_NSEMA];
-sem_t semID;
+sem_t semFree;
 
 sem_t semAlloc();
 void semFree(sem_t freeSem);
@@ -17,25 +17,26 @@ void P(Semaphore *s, PCB *waitPcb);
 void V(Semaphore *s);
 
 void initSem() {
-    semID = 0;
-    for (int i = 0; i < MAX_NSEMA - 1; i++) 
+    semFree = 0;
+    for (int i = 0; i < MAX_NSEMA - 1; i++)
         sem[i].next = i + 1;
     sem[MAX_NSEMA - 1].next = -1;
 }
 
 sem_t semAlloc() {
-    if (semID == -1) {
+    if (semFree == -1)
+    {
         printf("No semaphore for alloc !");
         assert(0);
     }
-    sem_t ret = semID;
-    semID = sem[semID].next;  
-    return ret;  
+    sem_t ret = semFree;
+    semFree = sem[semFree].next;
+    return ret;
 }
 
 void semFree(sem_t freeSem) {
-    sem[freeSem].next = semID;
-    semID = freeSem;
+    sem[freeSem].next = semFree;
+    semFree = freeSem;
 }
 
 void procQueueInit(struct ProcQueue *queue) {
@@ -57,16 +58,18 @@ PCB *procQueuePush(struct ProcQueue *queue, PCB *pushPcb) {
 }
 
 void P(Semaphore *s, PCB *waitPcb) {
-    s->value --;
-    if (s->value < 0) {
+    s->value--;
+    if (s->value < 0)
+    {
         PCB *sleepPcb = procQueuePush(&s->queue, waitPcb);
         sleepPcb->state = BLOCKED;
     }
 }
 
 void V(Semaphore *s) {
-    s->value ++;
-    if (s->value <= 0) {
+    s->value++;
+    if (s->value <= 0)
+    {
         PCB *wakePcb = procQueuePop(&s->queue);
         Log("To wake %d", wakePcb->pid);
         wakePcb->state = RUNNABLE;
@@ -77,17 +80,17 @@ int semCreate(sem_t *usr_sem, int value) {
     *usr_sem = semAlloc();
     sem[*usr_sem].value = value;
     procQueueInit(&sem[*usr_sem].queue);
-    Log("semID: %d",*usr_sem);
+    Log("semFree: %d", *usr_sem);
     return 0;
 }
 
-int semPost(sem_t *semID) {
-    V(&sem[*semID]);
+int semPost(sem_t *semFree) {
+    V(&sem[*semFree]);
     return 0;
 }
 
-int semWait(sem_t *semID, PCB *waitPcb) {
-    P(&sem[*semID], waitPcb);
+int semWait(sem_t *semFree, PCB *waitPcb) {
+    P(&sem[*semFree], waitPcb);
     return 0;
 }
 

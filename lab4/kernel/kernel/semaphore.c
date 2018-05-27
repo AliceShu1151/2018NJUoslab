@@ -6,7 +6,7 @@
 #define MAX_NSEMA 10
 
 struct Semaphore sem[MAX_NSEMA];
-sem_t semFree;
+sem_t semF;
 
 sem_t semAlloc();
 void semFree(sem_t freeSem);
@@ -17,26 +17,26 @@ void P(Semaphore *s, PCB *waitPcb);
 void V(Semaphore *s);
 
 void initSem() {
-    semFree = 0;
+    semF = 0;
     for (int i = 0; i < MAX_NSEMA - 1; i++)
         sem[i].next = i + 1;
     sem[MAX_NSEMA - 1].next = -1;
 }
 
 sem_t semAlloc() {
-    if (semFree == -1)
+    if (semF == -1)
     {
         printf("No semaphore for alloc !");
         assert(0);
     }
-    sem_t ret = semFree;
-    semFree = sem[semFree].next;
+    sem_t ret = semF;
+    semF = sem[semF].next;
     return ret;
 }
 
 void semFree(sem_t freeSem) {
-    sem[freeSem].next = semFree;
-    semFree = freeSem;
+    sem[semF].next = semF;
+    semF = freeSem;
 }
 
 void procQueueInit(struct ProcQueue *queue) {
